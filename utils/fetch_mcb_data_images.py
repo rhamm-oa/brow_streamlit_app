@@ -1,12 +1,13 @@
 import os
 import glob
+import shutil
 
-# Set this to the path where 'old_city' is located
-base_dir = r"/home/user/explore_brows/old_cities"
+# Set your base directory
+base_dir = r"/home/user/explore_brows/old_cities"  # Change to your path!
+output_folder = os.path.join(base_dir, "all_frontal")
+os.makedirs(output_folder, exist_ok=True)
 
 cities = [d for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d))]
-print(f"Found {len(cities)} cities, which are {cities} in {base_dir}")
-result = []
 
 for city in cities:
     images_dir = os.path.join(base_dir, city, "Images")
@@ -24,23 +25,22 @@ for city in cities:
                 number_path = os.path.join(tone_path, number_folder)
                 if not os.path.isdir(number_path):
                     continue
-                # Look for XXXX03.jpg inside each number folder
-                pattern = os.path.join(number_path, f"{number_folder}03.jpg")
-                matches = glob.glob(pattern)
-                for match in matches:
-                    result.append(match)
 
-# Print all found images (full paths)
-for path in result:
-    print(path)
+                # Copy *03 images to all_frontal
+                for ext in ["jpg", "png"]:
+                    img03 = os.path.join(number_path, f"{number_folder}03.{ext}")
+                    if os.path.exists(img03):
+                        dest = os.path.join(
+                            output_folder,
+                            f"{number_folder}.{ext}"
+                        )
+                        shutil.copy2(img03, dest)
 
-# Optionally, copy them to a new folder:
-import shutil
+                # Delete *01, *02, *04, *05 images
+                for suffix in ["01", "02", "04", "05"]:
+                    for ext in ["jpg", "png"]:
+                        img = os.path.join(number_path, f"{number_folder}{suffix}.{ext}")
+                        if os.path.exists(img):
+                            os.remove(img)
 
-output_folder = os.path.join(base_dir, "all_03_images")
-os.makedirs(output_folder, exist_ok=True)
 
-for src in result:
-    filename = os.path.basename(src)
-    dest = os.path.join(output_folder, f"{os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(src)))).replace(' ', '_')}_{filename}")
-    shutil.copy2(src, dest)
